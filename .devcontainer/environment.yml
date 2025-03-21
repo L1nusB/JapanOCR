@@ -1,4 +1,4 @@
-name: base
+name: ocr
 channels:
   - conda-forge
   - defaults

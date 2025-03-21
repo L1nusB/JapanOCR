@@ -45,13 +45,16 @@ RUN groupadd --gid $USER_GID $USERNAME \
 COPY environment.yml /tmp/
 COPY requirements.txt /tmp/
 
-# Create and activate conda environment using environment.yml
+# Update environment.yml to use a different name (ocr-env)
+RUN sed -i 's/name: base/name: ocr-env/g' /tmp/environment.yml
+
+# Create conda environment using environment.yml
 RUN mamba env create -f /tmp/environment.yml && \
     conda clean -afy
 
 # Install pip packages from requirements.txt
 RUN . /opt/conda/etc/profile.d/conda.sh && \
-    conda activate base && \
+    conda activate ocr-env && \
     pip install -r /tmp/requirements.txt
 
 # Fix permissions for the conda directories

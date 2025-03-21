@@ -46,7 +46,7 @@ COPY environment.yml /tmp/
 COPY requirements.txt /tmp/
 
 # Update environment.yml to use a different name (ocr-env)
-RUN sed -i 's/name: base/name: ocr-env/g' /tmp/environment.yml
+RUN sed -i 's/ocr: base/name: ocr-env/g' /tmp/environment.yml
 
 # Create conda environment using environment.yml
 RUN mamba env create -f /tmp/environment.yml && \

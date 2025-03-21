@@ -19,10 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install additional language packs (add more as needed)
+# Install additional language packs
 RUN apt-get update && apt-get install -y \
     tesseract-ocr-deu \
-    tesseract-ocr-jpn \
+    tesseract-ocr-fra \
+    tesseract-ocr-spa \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -30,7 +31,6 @@ RUN apt-get update && apt-get install -y \
 ARG USERNAME=vscode
 ARG USER_UID=1000
 ARG USER_GID=$USER_UID
-
 RUN groupadd --gid $USER_GID $USERNAME \
     && useradd --uid $USER_UID --gid $USER_GID -m $USERNAME \
     && apt-get update \
@@ -38,13 +38,13 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
 
-# Set up the conda environment
-COPY environment.yml /tmp/
-RUN conda env update -n base -f /tmp/environment.yml && \
-    conda clean -afy && \
-    rm /tmp/environment.yml
+# Install mamba for faster dependency resolution
+RUN conda install -y -c conda-forge mamba
+
+# Create a minimal base environment first
+RUN mamba create -n base-env python=3.10 pip -y && \
+    mamba clean -afy
 
 # Set working directory
 WORKDIR /workspace
-
 USER $USERNAME

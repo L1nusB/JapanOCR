@@ -1,0 +1,21 @@
+{
+    "name": "Tesseract OCR Environment",
+    "dockerFile": "Dockerfile",
+    "settings": {
+        "python.defaultInterpreterPath": "/opt/conda/bin/python",
+        "python.linting.enabled": true,
+        "python.linting.pylintEnabled": true,
+        "python.formatting.provider": "black",
+        "editor.formatOnSave": true,
+        "terminal.integrated.shell.linux": "/bin/bash"
+    },
+    "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "ms-toolsai.jupyter",
+        "njpwerner.autodocstring"
+    ],
+    "forwardPorts": [],
+    "postCreateCommand": "bash ./.devcontainer/post-create.sh",
+    "remoteUser": "vscode"
+}

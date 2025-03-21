@@ -30,29 +30,6 @@ RUN apt-get update && apt-get install -y \
 # Install mamba for faster dependency resolution
 RUN conda install -y -c conda-forge mamba
 
-# Install all conda packages as root
-RUN mamba install -y -c conda-forge \
-    python=3.10 \
-    pip \
-    pytesseract \
-    pdf2image \
-    pillow \
-    numpy \
-    opencv \
-    pandas \
-    poppler \
-    jupyter \
-    ipykernel \
-    ipywidgets \
-    matplotlib \
-    black \
-    pylint \
-    mypy \
-    && mamba clean -afy
-
-# Install pip packages
-RUN pip install pytest pytest-cov
-
 # Create a non-root user
 ARG USERNAME=vscode
 ARG USER_UID=1000
@@ -63,6 +40,19 @@ RUN groupadd --gid $USER_GID $USERNAME \
     && apt-get install -y sudo \
     && echo $USERNAME ALL=\(root\) NOPASSWD:ALL > /etc/sudoers.d/$USERNAME \
     && chmod 0440 /etc/sudoers.d/$USERNAME
+
+# Copy environment files
+COPY environment.yml /tmp/
+COPY requirements.txt /tmp/
+
+# Create and activate conda environment using environment.yml
+RUN mamba env create -f /tmp/environment.yml && \
+    conda clean -afy
+
+# Install pip packages from requirements.txt
+RUN . /opt/conda/etc/profile.d/conda.sh && \
+    conda activate base && \
+    pip install -r /tmp/requirements.txt
 
 # Fix permissions for the conda directories
 RUN mkdir -p /opt/conda/pkgs \

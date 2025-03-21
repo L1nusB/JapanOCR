@@ -3,8 +3,9 @@ set -e
 
 echo "Setting up workspace..."
 # Activate the base environment
-# echo "Activating base environment"
-# source /opt/conda/bin/activate base-env
+echo "Activating base environment"
+source /opt/conda/etc/profile.d/conda.sh
+conda activate base
 
 echo "Testing Tesseract installation..."
 python -c "import pytesseract; print('Tesseract OCR setup successful!')"

@@ -1,4 +1,4 @@
-name: base
+name: base-env
 channels:
   - conda-forge
   - defaults
@@ -6,19 +6,8 @@ dependencies:
   - python=3.10
   - pip
   - pytesseract
-  - pdf2image
   - pillow
   - numpy
-  - opencv
   - pandas
-  - poppler
   - jupyter
   - ipykernel
-  - ipywidgets
-  - matplotlib
-  - black
-  - pylint
-  - mypy
-  - pip:
-    - pytest
-    - pytest-cov

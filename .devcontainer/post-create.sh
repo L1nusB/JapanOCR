@@ -1,10 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Installing additional packages..."
+echo "Activating base environment..."
 # Activate the base environment
 source /opt/conda/bin/activate base-env
 
+echo "Installing additional packages (mamba)..."
 # Install the remaining packages
 mamba install -y -c conda-forge \
   pdf2image \
@@ -16,9 +17,10 @@ mamba install -y -c conda-forge \
   pylint \
   mypy
 
+echo "Installing additional packages (pip)..."
 # Install pip packages
 pip install pytest pytest-cov
-pip install -r requirements.txt
+# pip install -r requirements.txt
 
 echo "Testing Tesseract installation..."
 tesseract --version

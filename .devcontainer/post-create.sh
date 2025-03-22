@@ -184,7 +184,7 @@ cat > __init__.py << 'EOL'
 from .tesseract_ocr import TesseractOCR, TesseractConfig
 EOL
 
-# Rename the main code file
-mv tesseract-ocr-wrapper.py tesseract_ocr.py
+# Copy TesseractOCR.py to tesseract_ocr.py for consistency
+cp TesseractOCR.py tesseract_ocr.py
 
 echo "Setup complete! You can now start using the OCR wrapper."

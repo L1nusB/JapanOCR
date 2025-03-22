@@ -1,4 +1,4 @@
-from TesseractOCR import TesseractOCR, TesseractConfig
+from src.japanese_ocr.tesseract_ocr import TesseractOCR, TesseractConfig
 
 # Basic usage
 ocr = TesseractOCR()

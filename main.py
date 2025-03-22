@@ -4,8 +4,9 @@ from TesseractOCR import TesseractOCR, TesseractConfig
 ocr = TesseractOCR()
 
 config = TesseractConfig(
-    lang="eng+jpn",
+    lang="jpn+eng",
     psm=6,  # Uniform block of text
+    # psm=3,  # Fully automatic page segmentation, but no OSD. (Default)
     oem=3,  # Default OCR Engine Mode (based on what is available)
     output_pdf=True,
 )

@@ -15,7 +15,7 @@ except ImportError:
 
 # Configure logging
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logging.basicConfig(level=logging.INFO, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger("TesseractOCR")
 
 
@@ -278,9 +278,30 @@ class TesseractOCR:
         
         # Build command
         cmd = [self.tesseract_cmd, str(image_path), str(out_path)]
+        
+        # When return_text is True, we always want txt output regardless of PDF settings
+        output_formats = []
+        if config.output_pdf:
+            output_formats.append("pdf")
+        
+        # Always add txt to cmd when return_text is True
+        # If txt is not specified, tesseract defaults to txt output anyway
+        if return_text and config.output_pdf:
+            output_formats.append("txt")
+        
+        # Add basic config args (lang, psm, oem, etc.)
         cmd.extend(config.to_cmd_args())
         
+        # If we have output_formats, replace "pdf" from to_cmd_args with our full list
+        if output_formats:
+            # Remove "pdf" if it was added by to_cmd_args
+            if "pdf" in cmd:
+                cmd.remove("pdf")
+            # Add all formats
+            cmd.extend(output_formats)
+        
         logger.info(f"Running Tesseract on {image_path}")
+        logger.debug(f"Command: {' '.join(cmd)}")
         
         # Run Tesseract
         result = subprocess.run(
@@ -293,21 +314,44 @@ class TesseractOCR:
         if result.returncode != 0:
             raise RuntimeError(f"Tesseract failed: {result.stderr}")
         
+        # Handle text return
+        text_output = None
         if return_text:
             txt_output = Path(f"{out_path}.txt")
             if txt_output.exists():
                 with open(txt_output, 'r', encoding='utf-8') as f:
-                    return f.read()
-            
-            # If file doesn't exist but we need the text, run again with txt output
-            if not output_dir:
+                    text_output = f.read()
+            else:
+                # If file doesn't exist but we need text, run again with txt output only
+                logger.warning(f"Text output not found at {txt_output}, running Tesseract again for text output")
                 txt_cmd = [self.tesseract_cmd, str(image_path), str(out_path)]
+                # Only add language flag for simplicity
                 txt_cmd.extend(["-l", config.lang])
                 subprocess.run(txt_cmd, check=True)
-                with open(f"{out_path}.txt", 'r', encoding='utf-8') as f:
-                    return f.read()
                 
-        return None
+                # Try reading the text file again
+                if txt_output.exists():
+                    with open(txt_output, 'r', encoding='utf-8') as f:
+                        text_output = f.read()
+                else:
+                    logger.error(f"Failed to create text output file: {txt_output}")
+            
+            # Clean up temporary directory if we created one and don't need to keep files
+            if not output_dir and os.path.exists(os.path.dirname(out_path)):
+                try:
+                    # Clean up temporary txt file if it exists and we only needed it for return_text
+                    if txt_output.exists() and not output_dir:
+                        txt_output.unlink()
+                    
+                    # If the directory still exists (e.g., we're in a temporary directory)
+                    tmp_path = os.path.dirname(out_path)
+                    if os.path.exists(tmp_path) and tmp_path.startswith(tempfile.gettempdir()):
+                        import shutil
+                        shutil.rmtree(tmp_path)
+                except Exception as e:
+                    logger.warning(f"Failed to clean up temporary files: {e}")
+                
+        return text_output
     
     def _process_pdf(
         self,

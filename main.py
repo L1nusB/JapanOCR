@@ -11,17 +11,26 @@ config = TesseractConfig(
     output_pdf=True,
 )
 
-# text = ocr.process_directory(input_dir="input",
-#                              output_dir="output",
-#                              config=config,
-#                              return_text=True)
-# print("Text: ", text)
-text = ocr.process_file(input_file="input/Lesson34.pdf",
-                             output_dir="output",
-                             config=config,
-                             return_text=True)
+# Process a PDF file with combined output
+text = ocr.process_file(
+    input_file="input/Lesson34.pdf",
+    output_dir="output",
+    config=config,
+    return_text=True,
+    combine_output=True  # This will create a combined output file
+)
 print("Text: ", text)
 
+# # Process a directory with combined output for multi-page documents
+# results = ocr.process_directory(
+#     "input",
+#     "output",
+#     config=config,
+#     return_text=True,
+#     combine_output=True
+# )
+
+# # Other usage examples...
 # # Process a single image file
 # text = ocr.process_file("image.png", return_text=True)
 # print(text)
@@ -55,7 +64,8 @@ print("Text: ", text)
 # result = ocr.process(
 #     "input/document.pdf",  # Could be a file, directory, or file list
 #     "output",
-#     return_text=True
+#     return_text=True,
+#     combine_output=True
 # )
 
 # # Create config with filtered kwargs

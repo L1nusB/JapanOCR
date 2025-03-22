@@ -130,6 +130,7 @@ class TesseractOCR:
         output_dir: Optional[Union[str, Path]] = None,
         config: Optional[TesseractConfig] = None,
         return_text: bool = False,
+        combine_output: bool = False,
         **kwargs
     ) -> Union[Optional[str], Dict[str, Optional[str]]]:
         """
@@ -143,6 +144,7 @@ class TesseractOCR:
             output_dir: Directory to save output files
             config: Tesseract configuration
             return_text: Whether to return extracted text
+            combine_output: For multi-page documents, whether to create a combined output file
             **kwargs: Additional arguments for specific processing methods
                       (recursive, file_extensions, etc.)
         
@@ -163,7 +165,7 @@ class TesseractOCR:
                     first_line = f.readline().strip()
                     if first_line and Path(first_line).exists():
                         logger.info(f"Processing as file list: {path}")
-                        return self.process_file_list(path, output_dir, config, return_text)
+                        return self.process_file_list(path, output_dir, config, return_text, combine_output)
             except Exception as e:
                 logger.debug(f"Failed to process as file list: {e}")
         
@@ -176,7 +178,8 @@ class TesseractOCR:
                 config, 
                 recursive=kwargs.get('recursive', False),
                 file_extensions=kwargs.get('file_extensions'),
-                return_text=return_text
+                return_text=return_text,
+                combine_output=combine_output
             )
         
         # Process as a single file
@@ -189,7 +192,8 @@ class TesseractOCR:
                     output_dir, 
                     config, 
                     output_filename_base=kwargs.get('output_filename_base'),
-                    return_text=return_text
+                    return_text=return_text,
+                    combine_output=combine_output
                 )
         
         raise ValueError(
@@ -203,7 +207,8 @@ class TesseractOCR:
         output_dir: Optional[Union[str, Path]] = None,
         config: Optional[TesseractConfig] = None,
         output_filename_base: Optional[str] = None,
-        return_text: bool = False
+        return_text: bool = False,
+        combine_output: bool = False
     ) -> Optional[str]:
         """
         Process a single file with Tesseract OCR.
@@ -214,6 +219,7 @@ class TesseractOCR:
             config: Tesseract configuration options
             output_filename_base: Base name for output files
             return_text: Whether to return the extracted text
+            combine_output: For multi-page documents, whether to create a combined output file
             
         Returns:
             The extracted text if return_text is True, otherwise None
@@ -236,7 +242,8 @@ class TesseractOCR:
                 out_dir, 
                 cfg, 
                 output_filename_base,
-                return_text
+                return_text,
+                combine_output
             )
         elif input_path.suffix.lower() in self.SUPPORTED_IMAGE_FORMATS:
             return self._process_image(
@@ -359,7 +366,8 @@ class TesseractOCR:
         output_dir: Optional[Path],
         config: TesseractConfig,
         output_filename_base: Optional[str] = None,
-        return_text: bool = False
+        return_text: bool = False,
+        combine_output: bool = False
     ) -> Optional[str]:
         """Process a PDF file by first converting it to images."""
         if not PDF_SUPPORT:
@@ -375,6 +383,20 @@ class TesseractOCR:
             dpi=config.dpi
         )
         
+        # Skip processing if no pages found
+        if not images:
+            logger.warning(f"No pages found in PDF: {pdf_path}")
+            return None
+        
+        # Determine output paths and create directories
+        base_name = output_filename_base or pdf_path.stem
+        
+        # Path for individual page files
+        pages_dir = None
+        if output_dir and combine_output:
+            pages_dir = output_dir / "pages" / base_name
+            os.makedirs(pages_dir, exist_ok=True)
+        
         # Create temporary directory for images
         with tempfile.TemporaryDirectory() as tmp_dir:
             image_paths = []
@@ -387,22 +409,71 @@ class TesseractOCR:
             
             # Process each image
             all_text = []
+            output_files = {"pdf": [], "txt": []}
+            
             for i, img_path in enumerate(image_paths):
+                page_number = i + 1
                 if output_filename_base:
-                    page_filename = f"{output_filename_base}_page_{i+1}"
+                    page_filename = f"{output_filename_base}_page_{page_number}"
                 else:
-                    page_filename = f"{pdf_path.stem}_page_{i+1}"
+                    page_filename = f"{pdf_path.stem}_page_{page_number}"
+                
+                # Use the pages directory if specified, otherwise use the main output directory
+                current_output_dir = pages_dir if pages_dir else output_dir
                 
                 text = self._process_image(
                     img_path,
-                    output_dir,
+                    current_output_dir,
                     config,
                     page_filename,
-                    return_text
+                    return_text or combine_output  # We need the text if combine_output is True
                 )
                 
-                if return_text and text:
+                if text:
                     all_text.append(text)
+                    
+                    # Keep track of output files for combining later
+                    if combine_output and current_output_dir:
+                        # Note the output files that were created
+                        if config.output_pdf:
+                            pdf_file = current_output_dir / f"{page_filename}.pdf"
+                            if pdf_file.exists():
+                                output_files["pdf"].append(pdf_file)
+                        
+                        txt_file = current_output_dir / f"{page_filename}.txt"
+                        if txt_file.exists():
+                            output_files["txt"].append(txt_file)
+            
+            # Create combined output files if requested and output_dir is provided
+            if combine_output and output_dir and all_text:
+                # Create combined text file
+                combined_txt_path = output_dir / f"{base_name}.txt"
+                with open(combined_txt_path, 'w', encoding='utf-8') as f:
+                    f.write("\n\n".join(all_text))
+                logger.info(f"Created combined text file: {combined_txt_path}")
+                
+                # If PDF output was requested, try to combine the PDFs
+                if config.output_pdf and output_files["pdf"]:
+                    try:
+                        # Check if PyPDF2 is available
+                        import importlib.util
+                        if importlib.util.find_spec("PyPDF2"):
+                            import PyPDF2
+                            combined_pdf_path = output_dir / f"{base_name}.pdf"
+                            
+                            merger = PyPDF2.PdfMerger()
+                            for pdf_file in output_files["pdf"]:
+                                merger.append(str(pdf_file))
+                            
+                            with open(combined_pdf_path, 'wb') as f:
+                                merger.write(f)
+                                
+                            logger.info(f"Created combined PDF file: {combined_pdf_path}")
+                        else:
+                            logger.warning("PyPDF2 package not found. Cannot create combined PDF.")
+                            logger.warning("Install with: pip install PyPDF2")
+                    except Exception as e:
+                        logger.error(f"Failed to create combined PDF: {e}")
             
             # Combine text from all pages
             if return_text:
@@ -417,7 +488,8 @@ class TesseractOCR:
         config: Optional[TesseractConfig] = None,
         recursive: bool = False,
         file_extensions: Optional[Set[str]] = None,
-        return_text: bool = False
+        return_text: bool = False,
+        combine_output: bool = False
     ) -> Dict[str, Optional[str]]:
         """
         Process all supported files in a directory.
@@ -429,6 +501,7 @@ class TesseractOCR:
             recursive: Whether to search subdirectories
             file_extensions: Set of file extensions to process
             return_text: Whether to return extracted text
+            combine_output: For multi-page documents, whether to create a combined output file
             
         Returns:
             Dictionary mapping filenames to extracted text (if return_text is True)
@@ -464,7 +537,8 @@ class TesseractOCR:
                     file_path,
                     output_dir,
                     config,
-                    return_text=return_text
+                    return_text=return_text,
+                    combine_output=combine_output
                 )
                 
                 if return_text:
@@ -482,7 +556,8 @@ class TesseractOCR:
         file_list_path: Union[str, Path],
         output_dir: Optional[Union[str, Path]] = None,
         config: Optional[TesseractConfig] = None,
-        return_text: bool = False
+        return_text: bool = False,
+        combine_output: bool = False
     ) -> Dict[str, Optional[str]]:
         """
         Process files listed in a text file.
@@ -492,6 +567,7 @@ class TesseractOCR:
             output_dir: Directory to save output files
             config: Tesseract configuration
             return_text: Whether to return extracted text
+            combine_output: For multi-page documents, whether to create a combined output file
             
         Returns:
             Dictionary mapping filenames to extracted text (if return_text is True)
@@ -506,7 +582,8 @@ class TesseractOCR:
                     file_path,
                     output_dir,
                     config,
-                    return_text=return_text
+                    return_text=return_text,
+                    combine_output=combine_output
                 )
                 
                 if return_text:

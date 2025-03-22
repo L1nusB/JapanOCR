@@ -179,14 +179,14 @@ All requirements are automatically installed in the Codespace:
 MIT
 EOL
 
-# Create an __init__.py file to make the module importable
-cat > __init__.py << 'EOL'
-from .tesseract_ocr import TesseractOCR, TesseractConfig
-EOL
+# # Create an __init__.py file to make the module importable
+# cat > __init__.py << 'EOL'
+# from .tesseract_ocr import TesseractOCR, TesseractConfig
+# EOL
 
-# Copy TesseractOCR.py to tesseract_ocr.py for consistency (if it exists)
-if [ -f "TesseractOCR.py" ]; then
-    cp TesseractOCR.py tesseract_ocr.py
-fi
+# # Copy TesseractOCR.py to tesseract_ocr.py for consistency (if it exists)
+# if [ -f "TesseractOCR.py" ]; then
+#     cp TesseractOCR.py tesseract_ocr.py
+# fi
 
 echo "Setup complete! You can now start using the OCR wrapper."

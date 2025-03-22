@@ -1,1 +1,1 @@
-from .tesseract_ocr import TesseractOCR, TesseractConfig
+from .TesseractOCR import TesseractOCR, TesseractConfig

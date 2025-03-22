@@ -1,46 +1,92 @@
-# Tesseract OCR Wrapper
+# Japanese OCR
 
-A flexible Python wrapper for Tesseract OCR with support for:
-- Multiple input formats (images, PDFs, directories)
-- Custom configurations
-- Intelligent processing
-
-## Quick Start
-
-1. Open this repository in GitHub Codespaces
-2. Try the example notebook: `examples.ipynb`
-3. Import the wrapper in your code:
-   ```python
-   from tesseract_ocr import TesseractOCR, TesseractConfig
-   
-   ocr = TesseractOCR()
-   text = ocr.process("your_image.png", return_text=True)
-   print(text)
-   ```
+A flexible Python wrapper for Tesseract OCR with Japanese language support.
 
 ## Features
 
-- Process images directly
-- Convert PDFs to images for OCR processing
-- Batch process entire directories
-- Configure OCR parameters (language, PSM, OEM, etc.)
-- Return extracted text or save to files
+- Simple API for OCR processing of Japanese text
+- Support for various image formats (PNG, JPG, TIFF, etc.)
+- PDF processing capabilities (with optional dependencies)
+- Batch processing of files and directories
+- Configurable Tesseract parameters
 
-## Project Structure
+## Installation
 
-- `tesseract_ocr.py` - Main wrapper implementation
-- `examples.ipynb` - Jupyter notebook with examples
-- `samples/` - Sample images for testing
-- `output/` - Default output directory
+### Basic Installation
+
+```bash
+pip install japanese-ocr
+```
+
+### With PDF Support
+
+```bash
+pip install japanese-ocr[pdf]
+```
 
 ## Requirements
 
-All requirements are automatically installed in the Codespace:
-- Python 3.10+
-- Tesseract OCR
-- pdf2image
-- pytesseract
+- Python 3.8+
+- Tesseract OCR must be installed on your system
+- Japanese language data for Tesseract
+
+## Basic Usage
+
+```python
+from japanese_ocr import TesseractOCR, TesseractConfig
+
+# Initialize OCR with Japanese language support
+config = TesseractConfig(lang="jpn")
+ocr = TesseractOCR(default_config=config)
+
+# Process a single image
+text = ocr.process_file("path/to/japanese_image.png", return_text=True)
+print(text)
+
+# Process a PDF with multiple pages
+pdf_text = ocr.process_file(
+    "path/to/document.pdf",
+    output_dir="output",
+    combine_output=True,
+    return_text=True
+)
+print(pdf_text)
+```
+
+## Advanced Configuration
+
+```python
+# Custom configuration for vertical Japanese text
+config = TesseractConfig(
+    lang="jpn+jpn_vert",  # Japanese + Vertical Japanese
+    psm=5,                # Assume vertical single uniform text block
+    oem=1,                # LSTM OCR Engine only
+    config_string="--tessdata-dir /path/to/custom/tessdata"
+)
+
+# Process with custom configuration
+ocr = TesseractOCR()
+text = ocr.process_file("vertical_text.png", config=config, return_text=True)
+```
+
+## Processing Directories
+
+```python
+# Process all images in a directory
+results = ocr.process_directory(
+    "path/to/images/",
+    output_dir="output/",
+    recursive=True,
+    return_text=True
+)
+
+# Print results for each file
+for file_path, text in results.items():
+    print(f"File: {file_path}")
+    print(f"Text: {text[:100]}...")  # Print first 100 chars
+    print("-" * 50)
+```
 
 ## License
 
-MIT
+This project is licensed under the MIT License - see the LICENSE file for details.

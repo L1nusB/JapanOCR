@@ -15,8 +15,15 @@ except ImportError:
 
 # Configure logging
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+# Create a logger for this module without modifying global settings
 logger = logging.getLogger("TesseractOCR")
+# Set up handler for this logger only
+handler = logging.StreamHandler()
+handler.setFormatter(logging.Formatter('%(name)s - %(levelname)s - %(message)s'))
+logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+# Prevent propagation to avoid duplicate logs
+logger.propagate = False
 
 
 @dataclass

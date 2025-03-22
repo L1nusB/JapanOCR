@@ -2,7 +2,7 @@
     "name": "Tesseract OCR Environment",
     "dockerFile": "Dockerfile",
     "settings": {
-        "python.defaultInterpreterPath": "/opt/conda/bin/python",
+        "python.defaultInterpreterPath": "/opt/conda/envs/japanocr/bin/python",
         "python.linting.enabled": true,
         "python.linting.pylintEnabled": true,
         "python.formatting.provider": "black",
@@ -12,8 +12,7 @@
     "extensions": [
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "ms-toolsai.jupyter",
-        "njpwerner.autodocstring"
+        "ms-toolsai.jupyter"
     ],
     "forwardPorts": [],
     "postCreateCommand": "bash ./.devcontainer/post-create.sh",

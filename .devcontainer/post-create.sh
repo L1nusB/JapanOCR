@@ -2,7 +2,7 @@
 
 set -e
 
-echo "Installing Python requirements..."
+echo "Installing additional Python requirements..."
 pip install -r requirements.txt
 
 echo "Testing Tesseract installation..."
@@ -184,7 +184,9 @@ cat > __init__.py << 'EOL'
 from .tesseract_ocr import TesseractOCR, TesseractConfig
 EOL
 
-# Rename the main code file
-mv tesseract-ocr-wrapper.py tesseract_ocr.py
+# Copy TesseractOCR.py to tesseract_ocr.py for consistency (if it exists)
+if [ -f "TesseractOCR.py" ]; then
+    cp TesseractOCR.py tesseract_ocr.py
+fi
 
 echo "Setup complete! You can now start using the OCR wrapper."

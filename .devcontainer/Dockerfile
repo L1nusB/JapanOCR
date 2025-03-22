@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:latest
+FROM condaforge/mambaforge:latest
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -40,9 +40,13 @@ RUN groupadd --gid $USER_GID $USERNAME \
 
 # Set up the conda environment
 COPY environment.yml /tmp/
-RUN conda env update -n base -f /tmp/environment.yml && \
-    conda clean -afy && \
+RUN mamba env create -f /tmp/environment.yml && \
+    mamba clean -afy && \
     rm /tmp/environment.yml
+
+# Add conda environment to PATH
+ENV PATH /opt/conda/envs/japanocr/bin:$PATH
+ENV CONDA_DEFAULT_ENV japanocr
 
 # Set working directory
 WORKDIR /workspace

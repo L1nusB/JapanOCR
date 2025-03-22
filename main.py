@@ -1,4 +1,4 @@
-from TesseractOCR import TesseractOCR, TesseractConfig
+from tesseract_ocr import TesseractOCR, TesseractConfig
 
 # Basic usage
 ocr = TesseractOCR()

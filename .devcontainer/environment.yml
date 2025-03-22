@@ -1,4 +1,4 @@
-name: base
+name: japanocr
 channels:
   - conda-forge
   - defaults
@@ -14,11 +14,6 @@ dependencies:
   - poppler
   - jupyter
   - ipykernel
-  - ipywidgets
   - matplotlib
-  - black
-  - pylint
-  - mypy
   - pip:
     - pytest
-    - pytest-cov
